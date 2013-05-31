@@ -1,8 +1,9 @@
 require 'huge_enumerable'
 
-class HugeCombination2 < HugeCollection
+class HugeCombination < HugeCollection
 
-  def initialize(enumerable, max_array_size = nil, rng = nil)
+  def initialize(enumerable, length, max_array_size = nil, rng = nil)
+    raise NotImplemented, "Not yet implemented for any length != 2" if length != 2 # TODO: Extend this class to handle length N
     super(enumerable, max_array_size, rng)
   end
 
