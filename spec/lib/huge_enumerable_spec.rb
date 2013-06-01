@@ -112,6 +112,13 @@ describe HugeEnumerable do
       enumerable.next_array.should eql(array[size...size*2])
     end
 
+    it "changes #size" do
+      size = array.size / 5
+      enumerable.max_array_size = size
+      enumerable.next_array
+      enumerable.size.should eql(array.size - size)
+    end
+
   end
 
   context "#empty?" do
@@ -154,6 +161,12 @@ describe HugeEnumerable do
         enumerable.pop
         enumerable.pop(3)
         enumerable.to_a.should eql(array[0..-5])
+      end
+
+      it "changes #size" do
+        enumerable.pop
+        enumerable.pop(3)
+        enumerable.size.should eql(array.size - 4)
       end
 
       it "does not harm the original collection" do
@@ -215,6 +228,12 @@ describe HugeEnumerable do
         enumerable.to_a.should eql(array[4..-1])
       end
 
+      it "changes #size" do
+        enumerable.shift
+        enumerable.shift(3)
+        enumerable.size.should eql(array.size - 4)
+      end
+
       it "does not harm the original collection" do
         original = array.dup
         enumerable.shift
@@ -252,12 +271,12 @@ describe HugeEnumerable do
     it("is implemented") { pending "tests to be written" }
   end
 
-  context "#shift" do
-    it("is implemented") { pending "tests to be written" }
-  end
-
   context "#size" do
-    it("is implemented") { pending "tests to be written" }
+
+    it "returns the current size of the collection" do
+      enumerable.size.should eql(array.size)
+    end
+
   end
 
 end
