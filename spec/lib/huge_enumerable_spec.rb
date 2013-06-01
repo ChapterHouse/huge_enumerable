@@ -9,6 +9,8 @@ describe HugeEnumerable do
     enum_collection = collection
     klass.define_method(:collection_size) { enum_collection.size }
     klass.define_method(:fetch) { |x| enum_collection[x] }
+    klass.send(:public, :next_prime)
+    klass.send(:public, :_fetch)
     klass.new
   end
 
@@ -281,6 +283,48 @@ describe HugeEnumerable do
     it "returns the current size of the collection" do
       enumerable.size.should eql(collection.size)
     end
+
+  end
+
+  context "#(private)next_prime" do
+
+    it "should return the next prime following any integer" do
+      primes = Prime.first(100)
+      x = 0
+      until primes.empty?
+        enumerable.next_prime(x).should eq(primes.first)
+        x += 1
+        primes.shift if x.prime?
+      end
+    end
+
+  end
+
+  context "#(private)_fetch" do
+
+    it "should never relay to fetch wth a sequence mapped index below the range (sequence_start..sequence_end)" do
+      enumerable.should_not_receive(:fetch)
+      enumerable._fetch(-1 * enumerable.size - 1)
+    end
+
+    it "should never relay to fetch wth a sequence mapped index above the range (sequence_start..sequence_end)" do
+      enumerable.should_not_receive(:fetch)
+      enumerable._fetch(enumerable.size)
+    end
+
+    it "should relay to fetch wth a sequence mapped index within the range (sequence_start..sequence_end)" do
+      enumerable.should_receive(:fetch).twice
+      enumerable._fetch(0)
+      enumerable._fetch(enumerable.size - 1)
+    end
+
+    it "should map the sequence relative index to an absolute index before calling fetch" do
+      enumerable.shift(3)
+      enumerable.should_receive(:fetch).with(3)
+      enumerable._fetch(0)
+    end
+
+
 
   end
 

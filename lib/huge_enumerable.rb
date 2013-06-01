@@ -147,9 +147,13 @@ class HugeEnumerable
   end
 
   def next_prime(x)
-    x = x + (x.even? ? 1 : 2)
-    x += 2 until x.prime?
-    x
+    if x < 2
+      2
+    else
+      x = x + (x.even? ? 1 : 2)
+      x += 2 until x.prime?
+      x
+    end
   end
 
   def pop1
@@ -163,7 +167,13 @@ class HugeEnumerable
   end
 
   def shuffle_index(regular_index)
-    (shuffle_head + iterator * regular_index) % collection_size
+    regular_index ? (shuffle_head + iterator * regular_index) % collection_size : nil
+  end
+
+  def relative_index(regular_index)
+    regular_index = end_of_sequence + regular_index if regular_index < 0
+    regular_index += start_of_sequence
+    regular_index >= 0 && regular_index < end_of_sequence ? regular_index : nil
   end
 
   def shift1
@@ -173,13 +183,8 @@ class HugeEnumerable
   end
 
   def _fetch(i)
-    i += start_of_sequence
-
-    if i >= end_of_sequence || i < -size
-      nil
-    else
-      fetch(shuffle_index(i))
-    end
+    i = shuffle_index(relative_index(i))
+    i ? fetch(i) : nil
   end
 
   def sample1(rng)
