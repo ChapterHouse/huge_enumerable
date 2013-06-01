@@ -83,7 +83,7 @@ class HugeEnumerable
     rng ||= self.rng
     @start_of_sequence = 0
     @end_of_sequence = nil
-    @shuffle_head = rand(collection_size)
+    @shuffle_head = rng.call(collection_size)
     @collection_increment = full_cycle_increment(collection_size)
     self
   end
@@ -163,7 +163,8 @@ class HugeEnumerable
   end
 
   def full_cycle_increment(domain_size)
-    next_prime(( 2 * domain_size / (1 + Math.sqrt(5)) ).to_i)
+    increment = next_prime(( 2 * domain_size / (1 + Math.sqrt(5)) ).to_i)
+    increment == domain_size ? next_prime(increment + 1) : increment
   end
 
   def element_or_array(n = nil)

@@ -6,12 +6,13 @@ describe HugeEnumerable do
 
   subject(:enumerable) do
     klass = Class.new(HugeEnumerable)
-    enum_collection = collection
+    enum_collection = collection.sort
     klass.define_method(:collection_size) { enum_collection.size }
     klass.define_method(:fetch) { |x| enum_collection[x] }
     klass.send(:public, :next_prime)
     klass.send(:public, :_fetch)
     klass.send(:public, :element_or_array)
+    klass.send(:public, :full_cycle_increment)
     klass.new
   end
 
@@ -37,7 +38,6 @@ describe HugeEnumerable do
     end
 
   end
-
 
   context "#[]" do
 
@@ -297,6 +297,10 @@ describe HugeEnumerable do
       shuffle1.should_not eq(shuffle2)
     end
 
+    it "contains all of the original elements" do
+      enumerable.shuffle!.to_a.sort.should eq(collection)
+    end
+
     it "does noy alter the original collection" do
       original = collection.dup
       enumerable.max_array_size = enumerable.size
@@ -402,6 +406,14 @@ describe HugeEnumerable do
 
     it "raises an exception if the parameter is negative" do
       expect { enumerable.element_or_array(-1, &block) }.to raise_error(ArgumentError, 'negative array size')
+    end
+
+  end
+
+  context "#(private)full_cycle_increment" do
+
+    it "must never return a value equal to the domain size" do
+      (0...100).to_a.all? { |x| enumerable.full_cycle_increment(x) != x }.should be_true
     end
 
   end
