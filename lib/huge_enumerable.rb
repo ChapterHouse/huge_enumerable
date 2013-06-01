@@ -7,18 +7,23 @@ class HugeEnumerable
 
   include Enumerable
 
+  DEFAULT_MAX_ARRAY_SIZE=10000
+
   attr_accessor :max_array_size
   attr_accessor :rng
 
   def initialize(max_array_size = nil, rng = nil)
     @max_array_size = max_array_size ? max_array_size.to_i : nil
-    @rng = method(:rand)
+    @rng = self.method(:rand)
     @iterator = 1
     @start_of_sequence = 0
     @shuffle_head = 0
   end
 
   def [](x)
+    # TODO: Support a range
+    # TODO: Support second length parameter
+    # Consider returning HugeCollections?
     _fetch(x)
   end
 
@@ -27,7 +32,7 @@ class HugeEnumerable
   end
 
   def max_array_size
-    @max_array_size ||= [collection_size, 10000].min
+    @max_array_size ||= [collection_size, DEFAULT_MAX_ARRAY_SIZE].min
   end
 
   def next_array
@@ -40,11 +45,14 @@ class HugeEnumerable
   end
 
   def pop(n = nil)
-    raise ArgumentError, 'negative array size' if n.to_i < 0
+    unless n.nil?
+      n = n.to_i
+      raise ArgumentError, 'negative array size' if n < 0
+    end
     unless empty?
-      n ? (0...remaining_or(n.to_i)).map { pop1 }.reverse : pop1
+      n ? (0...remaining_or(n)).map { pop1 }.reverse : pop1
     else
-      n.nil ? nil : []
+      n.nil? ? nil : []
     end
   end
 
@@ -68,9 +76,12 @@ class HugeEnumerable
       rng = method(:rand)
     end
 
-    raise ArgumentError, 'negative sample number' if n.to_i < 0
+    unless n.nil?
+      n = n.to_i
+      raise ArgumentError, 'negative array size' if n < 0
+    end
     unless empty?
-      n ? (0...remaining_or(n.to_i)).map { sample1(rng) } : sample1(rng)
+      n ? (0...remaining_or(n)).map { sample1(rng) } : sample1(rng)
     else
       n.nil ? nil : []
     end
@@ -78,11 +89,14 @@ class HugeEnumerable
   end
 
   def shift(n = nil)
-    raise ArgumentError, 'negative array size' if n.to_i < 0
+    unless n.nil?
+      n = n.to_i
+      raise ArgumentError, 'negative array size' if n < 0
+    end
     unless empty?
-      n ? (0...remaining_or(n.to_i)).map { shift1 } : shift1
+      n ? (0...remaining_or(n)).map { shift1 } : shift1
     else
-      n.nil ? nil : []
+      n.nil? ? nil : []
     end
   end
 
