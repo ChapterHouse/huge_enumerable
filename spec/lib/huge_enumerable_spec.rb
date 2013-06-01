@@ -2,13 +2,14 @@ require 'spec_helper'
 
 describe HugeEnumerable do
 
-  let(:array) { ('a'..'z').to_a }
+  let(:collection) { ('a'..'z').to_a }
 
   subject(:enumerable) do
-    HugeEnumerable.new.tap do |enum|
-      enum.stub(:collection_size).and_return(array.size)
-      enum.stub(:fetch) { |x| array[x] }
-    end
+    klass = Class.new(HugeEnumerable)
+    enum_collection = collection
+    klass.define_method(:collection_size) { enum_collection.size }
+    klass.define_method(:fetch) { |x| enum_collection[x] }
+    klass.new
   end
 
   subject(:emptied_enumerable) do
@@ -39,13 +40,13 @@ describe HugeEnumerable do
 
     context "with a positive index" do
       it "returns the element from the beginning of the collection at the specified index" do
-        enumerable[3].should eql(array[3])
+        enumerable[3].should eql(collection[3])
       end
     end
 
     context "with a negative index" do
       it "returns the element from the end of the collection at the specified index" do
-        enumerable[-3].should eql(array[-3])
+        enumerable[-3].should eql(collection[-3])
       end
     end
 
@@ -66,7 +67,7 @@ describe HugeEnumerable do
 
     it "yields #max_array_size items" do
       items = []
-      total_items = array.size / 5
+      total_items = collection.size / 5
       enumerable.max_array_size = total_items
       enumerable.each { |x| items << x }
       items.size.should eql(total_items)
@@ -74,9 +75,9 @@ describe HugeEnumerable do
 
     it "yields only the remaining items if there are fewer than #max_array_size" do
       items = []
-      enumerable.max_array_size = array.size + 1
+      enumerable.max_array_size = collection.size + 1
       enumerable.each { |x| items << x }
-      items.size.should eql(array.size)
+      items.size.should eql(collection.size)
     end
 
     it "relays to #_fetch for index mapping" do
@@ -107,16 +108,16 @@ describe HugeEnumerable do
   context "#next_array" do
 
     it "advances to the next array in the collection" do
-      size = array.size / 5
+      size = collection.size / 5
       enumerable.max_array_size = size
-      enumerable.next_array.should eql(array[size...size*2])
+      enumerable.next_array.should eql(collection[size...size*2])
     end
 
     it "changes #size" do
-      size = array.size / 5
+      size = collection.size / 5
       enumerable.max_array_size = size
       enumerable.next_array
-      enumerable.size.should eql(array.size - size)
+      enumerable.size.should eql(collection.size - size)
     end
 
   end
@@ -124,13 +125,13 @@ describe HugeEnumerable do
   context "#empty?" do
 
     it "returns true if the collection has been entirely emptied by #pop, #shift, or #next_array" do
-      enumerable.max_array_size = array.size
+      enumerable.max_array_size = collection.size
       enumerable.next_array
       enumerable.empty?.should be_true
     end
 
     it "returns false if the collection has been not entirely emptied by #pop, #shift, or #next_array" do
-      enumerable.max_array_size = array.size - 1
+      enumerable.max_array_size = collection.size - 1
       enumerable.next_array
       enumerable.empty?.should be_false
     end
@@ -142,13 +143,13 @@ describe HugeEnumerable do
     context "on a non empty collection" do
       context "with no parameter" do
         it "returns the next element from the end of the collection" do
-          enumerable.pop.should eql(array.pop)
+          enumerable.pop.should eql(collection.pop)
         end
       end
 
       context "with a parameter" do
         it "returns an array of the next N elements from the end of the collection" do
-          enumerable.pop(3).should eql(array.pop(3))
+          enumerable.pop(3).should eql(collection.pop(3))
         end
 
         it "will not return more items than remain in the collection" do
@@ -160,20 +161,20 @@ describe HugeEnumerable do
       it "removes the elements from the end of the collection" do
         enumerable.pop
         enumerable.pop(3)
-        enumerable.to_a.should eql(array[0..-5])
+        enumerable.to_a.should eql(collection[0..-5])
       end
 
       it "changes #size" do
         enumerable.pop
         enumerable.pop(3)
-        enumerable.size.should eql(array.size - 4)
+        enumerable.size.should eql(collection.size - 4)
       end
 
       it "does not harm the original collection" do
-        original = array.dup
+        original = collection.dup
         enumerable.pop
         enumerable.pop(3)
-        array.should eql(original)
+        collection.should eql(original)
       end
 
     end
@@ -207,13 +208,13 @@ describe HugeEnumerable do
     context "on a non empty collection" do
       context "with no parameter" do
         it "returns the next element from the beginning of the collection" do
-          enumerable.shift.should eql(array.shift)
+          enumerable.shift.should eql(collection.shift)
         end
       end
 
       context "with a parameter" do
         it "returns an array of the next N elements from the beginning of the collection" do
-          enumerable.shift(3).should eql(array.shift(3))
+          enumerable.shift(3).should eql(collection.shift(3))
         end
 
         it "will not return more items than remain in the collection" do
@@ -225,20 +226,20 @@ describe HugeEnumerable do
       it "removes the elements from the beginning of the collection" do
         enumerable.shift
         enumerable.shift(3)
-        enumerable.to_a.should eql(array[4..-1])
+        enumerable.to_a.should eql(collection[4..-1])
       end
 
       it "changes #size" do
         enumerable.shift
         enumerable.shift(3)
-        enumerable.size.should eql(array.size - 4)
+        enumerable.size.should eql(collection.size - 4)
       end
 
       it "does not harm the original collection" do
-        original = array.dup
+        original = collection.dup
         enumerable.shift
         enumerable.shift(3)
-        array.should eql(original)
+        collection.should eql(original)
       end
 
     end
@@ -264,7 +265,11 @@ describe HugeEnumerable do
   end
 
   context "#shuffle" do
-    it("is implemented") { pending "tests to be written" }
+
+    it "returns a new HugeEnumerable" do
+      enumerable.shuffle.should_not equal(enumerable)
+    end
+
   end
 
   context "#shuffle!" do
@@ -274,7 +279,7 @@ describe HugeEnumerable do
   context "#size" do
 
     it "returns the current size of the collection" do
-      enumerable.size.should eql(array.size)
+      enumerable.size.should eql(collection.size)
     end
 
   end
