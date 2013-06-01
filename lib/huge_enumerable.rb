@@ -82,7 +82,7 @@ class HugeEnumerable
     unless empty?
       n ? (0...remaining_or(n)).map { sample1(rng) } : sample1(rng)
     else
-      n.nil ? nil : []
+      n.nil? ? nil : []
     end
 
   end

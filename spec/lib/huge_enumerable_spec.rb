@@ -202,7 +202,65 @@ describe HugeEnumerable do
   end
 
   context "#sample" do
-    it("is implemented") { pending "tests to be written" }
+
+    context "on an non empty collection" do
+
+      context "with no arguments" do
+        it "returns a single element from the collection" do
+          enumerable.sample.should be_a(collection.first.class)
+        end
+      end
+
+      context "with size argument" do
+        it "returns an array of elements from the collection" do
+          samples = enumerable.sample(3)
+          samples.should be_a(Array)
+        end
+
+        it "returns N elements from the collection" do
+          samples = enumerable.sample(3)
+          samples.should have(3).items
+        end
+
+        it "will not return more items than remain in the collection" do
+          samples = enumerable.sample(enumerable.size * 2)
+          samples.should have(enumerable.size).items
+        end
+      end
+
+      it "returns elements from the collection in a pseudo random pattern" do
+        samples = []
+        enumerable.size.times { samples << enumerable.sample }
+        samples.should_not eq(collection)
+      end
+
+      it "visits each element exactly once before repeating" do
+        samples = []
+        enumerable.size.times { samples << enumerable.sample }
+        samples.uniq.should have(collection.size).items
+      end
+
+    end
+
+    context "on an empty collection" do
+      context "with no parameter" do
+        it "returns nil" do
+          emptied_enumerable.sample.should be_nil
+        end
+      end
+
+      context "with a size argumeny" do
+        it "returns an empty array" do
+          emptied_enumerable.sample(3).should eql([])
+        end
+      end
+    end
+
+    it "raises an exception if the size parameter is negative" do
+      expect { enumerable.sample(-1) }.to raise_error(ArgumentError, 'negative array size')
+    end
+
+
   end
 
   context "#shift" do
@@ -323,7 +381,6 @@ describe HugeEnumerable do
       enumerable.should_receive(:fetch).with(3)
       enumerable._fetch(0)
     end
-
 
   end
 
