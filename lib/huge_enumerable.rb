@@ -44,15 +44,8 @@ class HugeEnumerable
   end
 
   def pop(n = nil)
-    unless n.nil?
-      n = n.to_i
-      raise ArgumentError, 'negative array size' if n < 0
-    end
-    unless empty?
-      n ? (0...remaining_or(n)).map { pop1 }.reverse : pop1
-    else
-      n.nil? ? nil : []
-    end
+    result = element_or_array(n) { pop1 }
+    n  ? result.reverse : result
   end
 
   def sample(*args)
@@ -75,28 +68,11 @@ class HugeEnumerable
       rng = method(:rand)
     end
 
-    unless n.nil?
-      n = n.to_i
-      raise ArgumentError, 'negative array size' if n < 0
-    end
-    unless empty?
-      n ? (0...remaining_or(n)).map { sample1(rng) } : sample1(rng)
-    else
-      n.nil? ? nil : []
-    end
-
+    element_or_array(n) { sample1(rng) }
   end
 
   def shift(n = nil)
-    unless n.nil?
-      n = n.to_i
-      raise ArgumentError, 'negative array size' if n < 0
-    end
-    unless empty?
-      n ? (0...remaining_or(n)).map { shift1 } : shift1
-    else
-      n.nil? ? nil : []
-    end
+    element_or_array(n) { shift1 }
   end
 
   def shuffle(rng=nil)
@@ -188,6 +164,18 @@ class HugeEnumerable
 
   def full_cycle_increment(domain_size)
     next_prime(( 2 * domain_size / (1 + Math.sqrt(5)) ).to_i)
+  end
+
+  def element_or_array(n = nil)
+    unless n.nil?
+      n = n.to_i
+      raise ArgumentError, 'negative array size' if n < 0
+    end
+    unless empty?
+      n ? (0...remaining_or(n)).map { yield } : yield
+    else
+      n.nil? ? nil : []
+    end
   end
 
 end

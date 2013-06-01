@@ -11,6 +11,7 @@ describe HugeEnumerable do
     klass.define_method(:fetch) { |x| enum_collection[x] }
     klass.send(:public, :next_prime)
     klass.send(:public, :_fetch)
+    klass.send(:public, :element_or_array)
     klass.new
   end
 
@@ -153,11 +154,6 @@ describe HugeEnumerable do
         it "returns an array of the next N elements from the end of the collection" do
           enumerable.pop(3).should eql(collection.pop(3))
         end
-
-        it "will not return more items than remain in the collection" do
-          size = enumerable.size
-          enumerable.pop(size + 1).should have(size).items
-        end
       end
 
       it "removes the elements from the end of the collection" do
@@ -181,22 +177,10 @@ describe HugeEnumerable do
 
     end
 
-    context "on an empty collection" do
-      context "with no parameter" do
-        it "returns nil" do
-          emptied_enumerable.pop.should be_nil
-        end
-      end
-
-      context "with a parameter" do
-        it "returns an empty array" do
-          emptied_enumerable.pop(3).should eql([])
-        end
-      end
-    end
-
-    it "raises an exception if the parameter is negative" do
-      expect { enumerable.pop(-1) }.to raise_error(ArgumentError, 'negative array size')
+    it "depends on #(private)element_or_array" do
+      enumerable.should_receive(:element_or_array).twice.and_call_original
+      enumerable.pop
+      enumerable.pop(3)
     end
 
   end
@@ -204,34 +188,22 @@ describe HugeEnumerable do
   context "#sample" do
 
     context "on an non empty collection" do
-
       context "with no arguments" do
         it "returns a single element from the collection" do
-          enumerable.sample.should be_a(collection.first.class)
+          collection.include?(enumerable.sample).should be_true
         end
       end
 
       context "with size argument" do
-        it "returns an array of elements from the collection" do
-          samples = enumerable.sample(3)
-          samples.should be_a(Array)
-        end
-
         it "returns N elements from the collection" do
           samples = enumerable.sample(3)
           samples.should have(3).items
-        end
-
-        it "will not return more items than remain in the collection" do
-          samples = enumerable.sample(enumerable.size * 2)
-          samples.should have(enumerable.size).items
+          samples.all? { |item| collection.include?(item) }.should be_true
         end
       end
 
       it "returns elements from the collection in a pseudo random pattern" do
-        samples = []
-        enumerable.size.times { samples << enumerable.sample }
-        samples.should_not eq(collection)
+        enumerable.sample(enumerable.size).should_not eq(collection)
       end
 
       it "visits each element exactly once before repeating" do
@@ -240,26 +212,20 @@ describe HugeEnumerable do
         samples.uniq.should have(collection.size).items
       end
 
-    end
-
-    context "on an empty collection" do
-      context "with no parameter" do
-        it "returns nil" do
-          emptied_enumerable.sample.should be_nil
-        end
+      it "does not reorder the original collection" do
+        original = collection.dup
+        enumerable.sample
+        enumerable.sample(3)
+        collection.should eql(original)
       end
 
-      context "with a size argumeny" do
-        it "returns an empty array" do
-          emptied_enumerable.sample(3).should eql([])
-        end
-      end
     end
 
-    it "raises an exception if the size parameter is negative" do
-      expect { enumerable.sample(-1) }.to raise_error(ArgumentError, 'negative array size')
+    it "depends on #(private)element_or_array" do
+      enumerable.should_receive(:element_or_array).twice.and_call_original
+      enumerable.sample
+      enumerable.sample(3)
     end
-
 
   end
 
@@ -275,11 +241,6 @@ describe HugeEnumerable do
       context "with a parameter" do
         it "returns an array of the next N elements from the beginning of the collection" do
           enumerable.shift(3).should eql(collection.shift(3))
-        end
-
-        it "will not return more items than remain in the collection" do
-          size = enumerable.size
-          enumerable.shift(size + 1).should have(size).items
         end
       end
 
@@ -304,22 +265,10 @@ describe HugeEnumerable do
 
     end
 
-    context "on an empty collection" do
-      context "with no parameter" do
-        it "returns nil" do
-          emptied_enumerable.shift.should be_nil
-        end
-      end
-
-      context "with a parameter" do
-        it "returns an empty array" do
-          emptied_enumerable.shift(3).should eql([])
-        end
-      end
-    end
-
-    it "raises an exception if the parameter is negative" do
-      expect { enumerable.shift(-1) }.to raise_error(ArgumentError, 'negative array size')
+    it "depends on #(private)element_or_array" do
+      enumerable.should_receive(:element_or_array).twice.and_call_original
+      enumerable.shift
+      enumerable.shift(3)
     end
 
   end
@@ -360,26 +309,77 @@ describe HugeEnumerable do
 
   context "#(private)_fetch" do
 
-    it "should never relay to fetch wth a sequence mapped index below the range (sequence_start..sequence_end)" do
-      enumerable.should_not_receive(:fetch)
-      enumerable._fetch(-1 * enumerable.size - 1)
+    context "with an index outside the range of (sequence_start..sequence_end)" do
+      it "should never relay to fetch" do
+        enumerable.should_not_receive(:fetch)
+        enumerable._fetch(-1 * enumerable.size - 1)
+        enumerable._fetch(enumerable.size)
+      end
     end
 
-    it "should never relay to fetch wth a sequence mapped index above the range (sequence_start..sequence_end)" do
-      enumerable.should_not_receive(:fetch)
-      enumerable._fetch(enumerable.size)
+    context "with an index inside the range of (sequence_start..sequence_end)" do
+      it "should relay to fetch" do
+        enumerable.should_receive(:fetch).twice
+        enumerable._fetch(0)
+        enumerable._fetch(enumerable.size - 1)
+      end
+
+      it "should map the relative index to an absolute index before calling fetch" do
+        enumerable.shift(3)
+        enumerable.stub(:shuffle_index) { |index| index + 2 }
+        enumerable.should_receive(:fetch).with(5)
+        enumerable._fetch(0)
+      end
+
     end
 
-    it "should relay to fetch wth a sequence mapped index within the range (sequence_start..sequence_end)" do
-      enumerable.should_receive(:fetch).twice
-      enumerable._fetch(0)
-      enumerable._fetch(enumerable.size - 1)
+  end
+
+  context "#(private)element_or_array" do
+
+    let(:block) { Proc.new { 1 } }
+
+    context "on a non empty collection" do
+      context "with no parameter" do
+        it "returns a single element" do
+          enumerable.element_or_array { block.call }.should eql(1)
+        end
+      end
+
+      context "with a nil parameter" do
+        it "returns a single element" do
+          enumerable.element_or_array(nil, &block).should eql(1)
+        end
+      end
+
+      context "with a non nil parameter" do
+        it "returns an array of N elements" do
+          enumerable.element_or_array(3, &block).should eql([1, 1, 1])
+        end
+
+        it "will not return more items than remain in the collection" do
+          size = enumerable.size
+          enumerable.element_or_array(size + 1, &block).should have(size).items
+        end
+      end
     end
 
-    it "should map the sequence relative index to an absolute index before calling fetch" do
-      enumerable.shift(3)
-      enumerable.should_receive(:fetch).with(3)
-      enumerable._fetch(0)
+    context "on an empty collection" do
+      context "with no parameter" do
+        it "returns nil" do
+          emptied_enumerable.element_or_array(&:block).should be_nil
+        end
+      end
+
+      context "with a parameter" do
+        it "returns an empty array" do
+          emptied_enumerable.element_or_array(3, &block).should eql([])
+        end
+      end
+    end
+
+    it "raises an exception if the parameter is negative" do
+      expect { enumerable.element_or_array(-1, &block) }.to raise_error(ArgumentError, 'negative array size')
     end
 
   end
