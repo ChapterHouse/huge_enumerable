@@ -325,7 +325,6 @@ describe HugeEnumerable do
     end
 
 
-
   end
 
 end

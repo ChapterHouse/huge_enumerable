@@ -9,13 +9,12 @@ class HugeEnumerable
 
   DEFAULT_MAX_ARRAY_SIZE=10000
 
-  attr_accessor :max_array_size
-  attr_accessor :rng
+  attr_accessor :max_array_size, :rng
 
   def initialize(max_array_size = nil, rng = nil)
     @max_array_size = max_array_size ? max_array_size.to_i : nil
     @rng = self.method(:rand)
-    @iterator = 1
+    @collection_increment = 1
     @start_of_sequence = 0
     @shuffle_head = 0
   end
@@ -109,7 +108,7 @@ class HugeEnumerable
     @start_of_sequence = 0
     @end_of_sequence = nil
     @shuffle_head = rng.call(collection_size)
-    @iterator = next_prime(( 2 * collection_size / (1 + Math.sqrt(5)) ).to_i)
+    @collection_increment = full_cycle_increment(collection_size)
     self
   end
 
@@ -119,8 +118,7 @@ class HugeEnumerable
 
   private
 
-  attr_reader :shuffle_head
-  attr_reader :index, :start_of_sequence, :end_of_sequence
+  attr_reader :shuffle_head, :start_of_sequence, :end_of_sequence, :collection_increment
 
   def collection_size
     raise NotImplementedError, "not implemented for #{self.class.name}"
@@ -132,18 +130,6 @@ class HugeEnumerable
 
   def fetch(x)
     raise NotImplementedError, "not implemented for #{self.class.name}"
-  end
-
-  def iterator
-    @iterator
-  end
-
-  def next_index
-    self.index = (index + iterator) % collection_size
-  end
-
-  def previous_index
-    self.index = (index - iterator) % collection_size
   end
 
   def next_prime(x)
@@ -166,14 +152,14 @@ class HugeEnumerable
     [x, size].min
   end
 
-  def shuffle_index(regular_index)
-    regular_index ? (shuffle_head + iterator * regular_index) % collection_size : nil
+  def shuffle_index(index)
+    index ? (shuffle_head + collection_increment * index) % collection_size : nil
   end
 
-  def relative_index(regular_index)
-    regular_index = end_of_sequence + regular_index if regular_index < 0
-    regular_index += start_of_sequence
-    regular_index >= 0 && regular_index < end_of_sequence ? regular_index : nil
+  def relative_index(index)
+    index = end_of_sequence + index if index < 0
+    index += start_of_sequence
+    index >= 0 && index < end_of_sequence ? index : nil
   end
 
   def shift1
@@ -182,18 +168,26 @@ class HugeEnumerable
     result
   end
 
-  def _fetch(i)
-    i = shuffle_index(relative_index(i))
-    i ? fetch(i) : nil
+  def _fetch(index)
+    index = shuffle_index(relative_index(index))
+    index ? fetch(index) : nil
   end
 
   def sample1(rng)
     if @sample_position.nil? || @sample_position >= size
       @sample_position = rng.call(size)
     else
-      @sample_position = (@sample_position + next_prime(( 2 * size / (1 + Math.sqrt(5)) ).to_i)) % size
+      if @last_sample_size != size
+        @last_sample_size = size
+        @sample_increment = full_cycle_increment(size)
+      end
+      @sample_position = (@sample_position + @sample_increment) % size
     end
     _fetch(@sample_position)
+  end
+
+  def full_cycle_increment(domain_size)
+    next_prime(( 2 * domain_size / (1 + Math.sqrt(5)) ).to_i)
   end
 
 end
