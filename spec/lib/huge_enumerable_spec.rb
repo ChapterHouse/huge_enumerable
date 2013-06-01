@@ -282,7 +282,29 @@ describe HugeEnumerable do
   end
 
   context "#shuffle!" do
-    it("is implemented") { pending "tests to be written" }
+
+    it "randomly alters the order of the sequence" do
+      fake_random = Proc.new { |x| 2 % x }
+      enumerable.max_array_size = enumerable.size
+      original = enumerable.to_a
+      enumerable.shuffle!(fake_random)
+      shuffle1 = enumerable.to_a
+      fake_random = Proc.new { |x| 3 % x }
+      enumerable.shuffle!(fake_random)
+      shuffle2 = enumerable.to_a
+      original.should_not eq(shuffle1)
+      original.should_not eq(shuffle2)
+      shuffle1.should_not eq(shuffle2)
+    end
+
+    it "does noy alter the original collection" do
+      original = collection.dup
+      enumerable.max_array_size = enumerable.size
+      enumerable.shuffle!
+      enumerable.to_a.should_not eq(original)
+      original.should eq(collection)
+    end
+
   end
 
   context "#size" do

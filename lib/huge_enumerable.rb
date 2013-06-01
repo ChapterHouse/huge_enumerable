@@ -83,7 +83,7 @@ class HugeEnumerable
     rng ||= self.rng
     @start_of_sequence = 0
     @end_of_sequence = nil
-    @shuffle_head = rng.call(collection_size)
+    @shuffle_head = rand(collection_size)
     @collection_increment = full_cycle_increment(collection_size)
     self
   end
