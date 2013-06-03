@@ -59,6 +59,31 @@ describe HugeEnumerable do
       end
     end
 
+    context "with a range" do
+      it "returns an array of elements corresponding to indexes within the range" do
+        size = collection.size + 1
+        test_range = (-size..size).to_a
+        ranges = test_range.product(test_range).map { |x| (x.first..x.last) }
+        arrays = ranges.map { |range| [enumerable[range], collection[range]] }
+        arrays.each { |x| x.first.should eq(x.last) }
+      end
+    end
+
+    context "with a length" do
+      it "returns an array of elements corresponding to starting with index and containing a maximum of length items" do
+        size = collection.size + 1
+        test_range = (-size..size).to_a
+        index_lengths = test_range.product(test_range).map { |x| [x.first, x.last] }
+        arrays = index_lengths.map do |idx_len|
+          index = idx_len.first
+          length = idx_len.last
+          [enumerable[index, length], collection[index, length]]
+        end
+        arrays.each { |x| x.first.should eq(x.last) }
+      end
+    end
+
+
     it "relays to #_fetch for index mapping" do
       enumerable.should_receive(:_fetch).at_least(:once)
       enumerable[0]

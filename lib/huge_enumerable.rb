@@ -19,11 +19,42 @@ class HugeEnumerable
     @shuffle_head = 0
   end
 
-  def [](x)
-    # TODO: Support a range
-    # TODO: Support second length parameter
-    # Consider returning HugeCollections?
-    _fetch(x)
+  def [](index_or_range, length=nil)
+    if index_or_range.is_a?(Range)
+      range = index_or_range
+      index = nil
+    else
+      index = index_or_range.to_i
+      range = nil
+    end
+
+    if range
+      index = range.first
+      index += size if index < 0
+
+      length = range.last - index + 1
+      length += size if range.last < 0
+      length = size - index if index + length > size
+
+      if index < 0 || index > size
+        nil
+      elsif length < 0
+        []
+      else
+        element_or_array(length) { |i| _fetch(i + index) }
+      end
+    elsif length
+      index += size if index < 0
+      length = size - index if index + length > size
+      if index < 0 || length < 0
+        nil
+      else
+        element_or_array(length) { |i| _fetch(i + index) }
+      end
+    else
+      _fetch(index)
+    end
+
   end
 
   def each(&block)
@@ -173,7 +204,7 @@ class HugeEnumerable
       raise ArgumentError, 'negative array size' if n < 0
     end
     unless empty?
-      n ? (0...remaining_or(n)).map { yield } : yield
+      n ? (0...remaining_or(n)).map { |x| yield(x) } : yield
     else
       n.nil? ? nil : []
     end
