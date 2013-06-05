@@ -58,6 +58,7 @@ class HugeEnumerable
   #
   # * +:length+ - The number of elements to return if index_or_range is not a range.
   def [](index_or_range, length=nil)
+    # TODO: Consider changing this to return HugeCollection
     if index_or_range.is_a?(Range)
       range = index_or_range
       index = nil
