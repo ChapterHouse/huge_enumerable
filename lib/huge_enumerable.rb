@@ -21,10 +21,22 @@ class HugeEnumerable
 
   include Enumerable
 
-  DEFAULT_MAX_ARRAY_SIZE=10000
+  # Currently 100,000 elements
+  DEFAULT_MAX_ARRAY_SIZE=100000
 
-  attr_accessor :max_array_size, :rng
+  # The maximum number of elements to be returned when to_a is called.
+  # If this is not set it will default to the collection_size or DEFAULT_MAX_ARRAY_SIZE depending on which is smaller.
+  attr_accessor :max_array_size
 
+  # The random number generator to use for shuffles and samples. Defaults to self#rand.
+  attr_accessor :rng
+
+  # Create a new HugeEnumerable
+  #
+  # ==== Options
+  #
+  # * +:max_array_size+ - The default size of arrays when #to_a is called.
+  # * +:rng+ - The random number generator to use.
   def initialize(max_array_size = nil, rng = nil)
     @max_array_size = max_array_size ? max_array_size.to_i : nil
     @rng = self.method(:rand)
@@ -33,6 +45,18 @@ class HugeEnumerable
     @shuffle_head = 0
   end
 
+  # Element Reference — Returns the element at index, or returns a subarray starting at the start index and continuing for length elements, or returns a subarray specified by range of indices.
+  # Negative indices count backward from the end of the collection (-1 is the last element).
+  # For start and range cases the starting index is just before an element.
+  # Additionally, an empty array is returned when the starting index for an element range is at the end of the collection.
+  # Returns nil if the index (or starting index) are out of range.
+  # ==== Attributes
+  #
+  # * +index_or_range+ - Either an integer for single element selection or length selection, or a range.
+  #
+  # ==== Options
+  #
+  # * +:length+ - The number of elements to return if index_or_range is not a range.
   def [](index_or_range, length=nil)
     if index_or_range.is_a?(Range)
       range = index_or_range
@@ -71,28 +95,45 @@ class HugeEnumerable
 
   end
 
+  # Calls the given block once for each element remaining in the collection, passing that element as a parameter.
+  def collection_each(&block)
+    # TODO: Return an Enumerator if no block is given
+    size.times { |i| yield _fetch(i) }
+  end
+
+  # Calls the given block once for each element in the next array of the collection, passing that element as a parameter.
   def each(&block)
+    # TODO: Return an Enumerator if no block is given
     remaining_or(max_array_size).times { |i| yield _fetch(i) }
   end
 
-  def max_array_size
+  def max_array_size #:nodoc:
     @max_array_size ||= [collection_size, DEFAULT_MAX_ARRAY_SIZE].min
   end
 
+  # Shifts max_array_size elements and returns the following array from to_a.
   def next_array
     shift(max_array_size)
     to_a
   end
 
+  # Returns true of the collection contains no more elements.
   def empty?
     @start_of_sequence == @end_of_sequence
   end
 
+  # Removes the last element from the collection and returns it, or nil if the collection is empty.
+  # If a number n is given, returns an array of the last n elements (or less).
   def pop(n = nil)
     result = element_or_array(n) { pop1 }
     n  ? result.reverse : result
   end
 
+  # Choose a random element or n random elements from the collection.
+  # The elements are chosen by using random and unique indices into the array in order to ensure
+  # that an element does not repeat itself unless the collection already contained duplicate elements.
+  # If the collection is empty the first form returns nil and the second form returns an empty array.
+  # The optional rng argument will be used as the random number generator.
   def sample(*args)
     if args.size > 2
       raise ArgumentError, "wrong number of arguments (#{args.size} for 2)"
@@ -116,14 +157,30 @@ class HugeEnumerable
     element_or_array(n) { sample1(rng) }
   end
 
-  def shift(n = nil)
+  # Removes the first element of the collection and returns it (shifting all other elements down by one).
+  # Returns nil if the collection is empty.
+  # If a number n is given, returns an array of the first n elements (or less).
+  # With collection containing only the remainder elements, not including what was shifted to returned array.
+  # ==== Options
+  # * +rng+ - The random number generator to use. Defaults to self#rng.
+   def shift(n = nil)
     element_or_array(n) { shift1 }
   end
 
+  # Returns a new HugeEnumerable with the order of the elements of the new collection randomized.
+  # ==== Options
+  # * +rng+ - The random number generator to use. Defaults to self#rng.
+  # ==== Side Effects
+  # The new collection is reset to the current collection's original size and elements before shuffling.
   def shuffle(rng=nil)
     self.dup.shuffle!(rng)
   end
 
+  # Randomly reorders the elements of the collection.
+  # ==== Options
+  # * +rng+ - The random number generator to use. Defaults to self#rng.
+  # ==== Side Effects
+  # The collection is reset to its original size and elements before shuffling
   def shuffle!(rng=nil)
     rng ||= self.rng
     @start_of_sequence = 0
@@ -133,6 +190,8 @@ class HugeEnumerable
     self
   end
 
+  # Returns the current size of the collection.
+  # Unlike collection_size, this tracks size changes caused by push, pop, shift, and next_array.
   def size
     end_of_sequence - start_of_sequence
   end
