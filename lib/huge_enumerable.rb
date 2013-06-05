@@ -39,7 +39,7 @@ class HugeEnumerable
   # * +:rng+ - The random number generator to use.
   def initialize(max_array_size = nil, rng = nil)
     @max_array_size = max_array_size ? max_array_size.to_i : nil
-    @rng = self.method(:rand)
+    @rng = rng || self.method(:rand)
     @collection_increment = 1
     @start_of_sequence = 0
     @shuffle_head = 0
@@ -96,13 +96,28 @@ class HugeEnumerable
   end
 
   # Calls the given block once for each element remaining in the collection, passing that element as a parameter.
-  def collection_each(&block)
+  def collection_each(&block) # :yields: element
     # TODO: Return an Enumerator if no block is given
     size.times { |i| yield _fetch(i) }
   end
 
+  # When invoked with a block, yields all combinations of length n of elements from the collection and then returns the collection itself.
+  # If no block is given, an HugeCombination is returned instead.
+  # === Caveat
+  # max_array_size is currently inherited by the generated HugeCombination. This may change in the future.
+  def combination(n) # :yields: element
+    random_number_generator = rng != self.method(:rand) ? rng : nil
+    combo = HugeCombination.new(self.dup.reset!, n, max_array_size, random_number_generator)
+    if block_given?
+      combo.each { |x| yield x }
+      self
+    else
+      combo
+    end
+  end
+
   # Calls the given block once for each element in the next array of the collection, passing that element as a parameter.
-  def each(&block)
+  def each # :yields: element
     # TODO: Return an Enumerator if no block is given
     remaining_or(max_array_size).times { |i| yield _fetch(i) }
   end
@@ -122,11 +137,43 @@ class HugeEnumerable
     @start_of_sequence == @end_of_sequence
   end
 
+  # When invoked with a block, yields all permutations of length n of elements from the collection and then returns the collection itself.
+  # If no block is given, a HugePermutation is returned instead.
+  # === Caveat
+  # max_array_size is currently inherited by the generated HugePermutation. This may change in the future.
+  def permutation(n) # :yields: element
+    random_number_generator = rng != self.method(:rand) ? rng : nil
+    perm = HugePermutation.new(self.dup.reset!, n, max_array_size, random_number_generator)
+    if block_given?
+      perm.each { |x| yield x }
+      self
+    else
+      perm
+    end
+  end
+
   # Removes the last element from the collection and returns it, or nil if the collection is empty.
   # If a number n is given, returns an array of the last n elements (or less).
   def pop(n = nil)
     result = element_or_array(n) { pop1 }
     n  ? result.reverse : result
+  end
+
+  # When invoked with a block, yields all combinations of elements from the collection and the other enumerable and then returns the collection itself.
+  # If no block is given, a HugeProduct is returned instead.
+  # === Caveat
+  # max_array_size is currently inherited by the generated HugeProduct. This may change in the future.
+  # other_enumerable is duped and reset if it is a HugeEnumerable. This may change in the future.
+  def product(other_enumerable) # :yields: element
+    other_enumerable = other_enumerable.dup.reset! if other_enumerable.is_a?(HugeEnumerable)
+    random_number_generator = rng != self.method(:rand) ? rng : nil
+    prod = HugeProduct.new(self.dup.reset!, other_enumerable, max_array_size, random_number_generator)
+    if block_given?
+      prod.each { |x| yield x }
+      self
+    else
+      prod
+    end
   end
 
   # Choose a random element or n random elements from the collection.
@@ -183,8 +230,7 @@ class HugeEnumerable
   # The collection is reset to its original size and elements before shuffling
   def shuffle!(rng=nil)
     rng ||= self.rng
-    @start_of_sequence = 0
-    @end_of_sequence = nil
+    reset!
     @shuffle_head = rng.call(collection_size)
     @collection_increment = full_cycle_increment(collection_size)
     self
@@ -194,6 +240,14 @@ class HugeEnumerable
   # Unlike collection_size, this tracks size changes caused by push, pop, shift, and next_array.
   def size
     end_of_sequence - start_of_sequence
+  end
+
+  protected
+
+  def reset!
+    @start_of_sequence = 0
+    @end_of_sequence = nil
+    self
   end
 
   private

@@ -115,6 +115,64 @@ describe HugeEnumerable do
 
   end
 
+  context "#combination" do
+
+    context "with no block" do
+
+      it "returns a new HugeCombination" do
+        enumerable.combination(2).should be_instance_of(HugeCombination)
+      end
+
+    end
+
+    context "with a block" do
+
+      # This should really be calls the block from the combination since there is testing duplication here.
+      # However, knowing where the block is called from would need stack investigation or similar.
+      it "calls the block for each combination element" do
+        combo = enumerable.combination(2)
+        enumerable.max_array_size = combo.size  # Hrm. Perhaps having to do this is a reason to have it call collection_each
+        index = 0
+        enumerable.combination(2) do |x|
+          x.should eql(combo[index])
+          index += 1
+        end
+        index.should eql(combo.size)
+      end
+
+      it "returns self" do
+        enumerable.combination(2) {}.should equal(enumerable)
+      end
+
+    end
+
+    it "uses self a dup of itself as the enumerable" do
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      HugeCombination.should_receive(:new).with(dupped_enumerable, 2, enumerable.max_array_size, nil)
+      enumerable.combination(2)
+    end
+
+    it "uses the same max array size" do
+      enumerable.combination(2).max_array_size.should eql(enumerable.max_array_size)
+    end
+
+    it "uses the same random number generator" do
+      enumerable.rng = Proc.new { 1 }
+      enumerable.combination(2).rng.should eq(enumerable.rng)
+    end
+
+    it "calls reset! on the dup" do
+      HugeEnumerable.send(:public, :reset!)
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      dupped_enumerable.should_receive(:reset!).and_call_original
+      enumerable.combination(2)
+    end
+
+  end
+
+
   context "#max_array_size" do
 
     context "not explicitly set" do
@@ -166,6 +224,64 @@ describe HugeEnumerable do
 
   end
 
+  context "#permutation" do
+
+    context "with no block" do
+
+      it "returns a new HugePermutation" do
+        enumerable.permutation(2).should be_instance_of(HugePermutation)
+      end
+
+    end
+
+    context "with a block" do
+
+      # This should really be calls the block from the combination since there is testing duplication here.
+      # However, knowing where the block is called from would need stack investigation or similar.
+      it "calls the block for each permutation element" do
+        perm = enumerable.permutation(2)
+        enumerable.max_array_size = perm.size  # Hrm. Perhaps having to do this is a reason to have it call collection_each
+        index = 0
+        enumerable.permutation(2) do |x|
+          x.should eql(perm[index])
+          index += 1
+        end
+        index.should eql(perm.size)
+      end
+
+      it "returns self" do
+        enumerable.permutation(2) {}.should equal(enumerable)
+      end
+
+    end
+
+    it "uses self a dup of itself as the enumerable" do
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      HugePermutation.should_receive(:new).with(dupped_enumerable, 2, enumerable.max_array_size, nil)
+      enumerable.permutation(2)
+    end
+
+    it "uses the same max array size" do
+      enumerable.permutation(2).max_array_size.should eql(enumerable.max_array_size)
+    end
+
+    it "uses the same random number generator" do
+      enumerable.rng = Proc.new { 1 }
+      enumerable.permutation(2).rng.should eq(enumerable.rng)
+    end
+
+    it "calls reset! on the dup" do
+      HugeEnumerable.send(:public, :reset!)
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      dupped_enumerable.should_receive(:reset!).and_call_original
+      enumerable.permutation(2)
+    end
+
+  end
+
+
   context "#pop" do
 
     context "on a non empty collection" do
@@ -206,6 +322,86 @@ describe HugeEnumerable do
       enumerable.should_receive(:element_or_array).twice.and_call_original
       enumerable.pop
       enumerable.pop(3)
+    end
+
+  end
+
+  context "#product" do
+
+    context "with no block" do
+
+      it "returns a new HugeProduct" do
+        enumerable.product([]).should be_instance_of(HugeProduct)
+      end
+
+    end
+
+    context "with a block" do
+
+      # This should really be calls the block from the combination since there is testing duplication here.
+      # However, knowing where the block is called from would need stack investigation or similar.
+      it "calls the block for each product element" do
+        other_enumerable = [1, 2, 3]
+        prod = enumerable.product(other_enumerable)
+        enumerable.max_array_size = prod.size  # Hrm. Perhaps having to do this is a reason to have it call collection_each
+        index = 0
+        enumerable.product(other_enumerable) do |x|
+          x.should eql(prod[index])
+          index += 1
+        end
+        index.should eql(prod.size)
+      end
+
+      it "returns self" do
+        enumerable.product([]) {}.should equal(enumerable)
+      end
+
+    end
+
+    it "uses self a dup of itself as the enumerable" do
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      other_enumerable = []
+      HugeProduct.should_receive(:new).with(dupped_enumerable, other_enumerable, enumerable.max_array_size, nil)
+      enumerable.product(other_enumerable)
+    end
+
+    it "calls dup on the other enumerable if it is a HugeEnumerable" do
+      other_enumerable = HugeCollection.new([])
+      other_enumerable.should_receive(:dup).and_call_original
+      enumerable.product(other_enumerable)
+    end
+
+    it "calls reset on the other enumerable if it is a HugeEnumerable" do
+      HugeEnumerable.send(:public, :reset!)
+      other_enumerable = HugeCollection.new([])
+      dupped_enumerable = other_enumerable.dup
+      other_enumerable.stub(:dup).and_return(dupped_enumerable)
+      dupped_enumerable.should_receive(:reset!).and_call_original
+      enumerable.product(other_enumerable)
+    end
+
+    it "does not call dup on the other enumerable if it is a HugeEnumerable" do
+      other_enumerable = []
+      other_enumerable.should_not_receive(:dup)
+      enumerable.product(other_enumerable)
+    end
+
+    it "uses the same max array size" do
+      enumerable.product([]).max_array_size.should eql(enumerable.max_array_size)
+    end
+
+    it "uses the same random number generator" do
+      enumerable.rng = Proc.new { 1 }
+      enumerable.product([]).rng.should eq(enumerable.rng)
+    end
+
+    it "calls reset! on the dup" do
+      HugeEnumerable.send(:public, :reset!)
+      dupped_enumerable = enumerable.dup
+      enumerable.stub(:dup).and_return(dupped_enumerable)
+      dupped_enumerable.should_receive(:reset!).and_call_original
+      enumerable.product([])
     end
 
   end
