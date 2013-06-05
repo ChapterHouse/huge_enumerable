@@ -1,5 +1,4 @@
 require 'huge_enumerable'
-
 # The simplest form of a HugeEnumerable.
 # This class can be used for large arrays or anything else that responds to [].
 # It is not necessary for the enumerable to be completely mapped into memory.

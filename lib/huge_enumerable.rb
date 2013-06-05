@@ -6,6 +6,17 @@ require 'prime_miller_rabin'
 
 Prime::MillerRabin.speed_intercept
 
+# HugeEnumerable is a base class that allows for enumerations over very large (potentially infinite)
+# data sets without requiring them to be in memory.
+# In addition to enumerable, abilities it also allows for shuffling, sampling, shifting, and popping as if it were
+# an array. These actions also do not require for the entire data set to be in memory. Nor do they alter the original
+# data set in any fashion.
+#
+# To use HugeEnumerable, inherit it via a subclass and provide the methods collection_size and fetch.
+# collection_size should return the size of the full data set.
+# fetch should return the value at the given index.
+# It is guaranteed that fetch will always be called with values in the range of (0...collection_size)
+# It will never be called with a negative index or with an index >= collection_size
 class HugeEnumerable
 
   include Enumerable
