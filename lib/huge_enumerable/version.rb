@@ -1,4 +1,4 @@
 class HugeEnumerable
-  # "0.0.1.pre"
-  VERSION = "0.0.1.pre"
+  # "0.0.1"
+  VERSION = "0.0.1"
 end
