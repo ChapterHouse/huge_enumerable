@@ -7,6 +7,8 @@ describe HugeProduct do
   let(:enum_prod) { enumerable_a.product(enumerable_b) }
 
   subject(:product) do
+    HugeProduct.send(:public, :collection_size)
+    HugeProduct.send(:public, :fetch)
     HugeProduct.new(enumerable_a, enumerable_b)
   end
 

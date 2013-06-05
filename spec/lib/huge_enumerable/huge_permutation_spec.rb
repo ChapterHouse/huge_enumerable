@@ -5,6 +5,8 @@ describe HugePermutation do
   let(:enumerable) { ('a'..'z').to_a }
 
   subject(:permutation) do
+    HugePermutation.send(:public, :collection_size)
+    HugePermutation.send(:public, :fetch)
     HugePermutation.new(enumerable, 2)
   end
 

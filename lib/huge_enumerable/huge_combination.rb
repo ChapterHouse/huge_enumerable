@@ -1,6 +1,5 @@
 require 'huge_enumerable'
-
-# HugeCombintion is a HugeEnumerable style combination. Comparable to Array#combination.
+# HugeCombination is a HugeEnumerable style combination. Comparable to Array#combination.
 # This class can be used to generate combinations of large arrays or anything else that responds to [].
 # It is not necessary for the enumerable to be completely mapped into memory.
 # It only has to be able to return the element mapped to the index given to [].
@@ -10,6 +9,7 @@ require 'huge_enumerable'
 #
 #    combination = HugeCombination.new(('a'..'z').to_a, 2)
 #    combination[0..4] # => [["a", "b"], ["a", "c"], ["a", "d"], ["a", "e"], ["a", "f"]]
+#    combination[23..27] # => [["a", "y"], ["a", "z"], ["b", "c"], ["b", "d"], ["b", "e"]]
 #
 #
 # Subclassing HugeCombination
@@ -21,18 +21,22 @@ require 'huge_enumerable'
 #        super(nil)
 #      end
 #
+#      private
+#
 #      def fetch(index)
 #        index
 #      end
 #
 #    end
 #
-#    class NumberPermutation < HugeCombination
+#    class NumberCombination < HugeCombination
 #
 #      def initialize(size)
 #        enumerable = size < 10 ? (0...size).to_a : NumberArray.new(size)
 #        super enumerable, 2, nil, nil
 #      end
+#
+#      private
 #
 #      def fetch(index)
 #        array = super
@@ -42,47 +46,36 @@ require 'huge_enumerable'
 #
 #    end
 #
-#    combination = NumberPermutation.new(10**30)
-#    combination.size # => 499999999999999999999999999999500000000000000000000000000000
-#
-
-#
-#    combination = StringNextCombination.new(10*30)
-#    collection.size # => 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-#    collection[0]          # => "a"
-#    collection[-1]         # => "zhxrtplbmwaiwcqlzpmglpziaegsdivmbvlnssusbjtbcgywaycqnhxztqwwikxvrsptazpp"
-#    collection[googol / 2] # => "dlijhfafxmqxnusmhfpshmdmopvodxfnkfgivwvnejaapyxmynutdlmjhxxqrykiiuizzhi"
-#    collection.shuffle!
-#    collection[0]          # => "bipzqqzayczkgsmaseflwktpsotzclcjsqlnnjaciaawufpojywxflknuddhqkilhoedacn"
-#    collecyion[-1]         # => "etneuebyurxgrvrfsreesxuvjaiyoqwplofsptacjdbhuhafdiwbwujvniokltgkjbfkiuy"
+#    combination = NumberCombination.new(10**30)
+#    size = combination.size # => 499999999999999999999999999999500000000000000000000000000000
+#    combination[0]          # => "0 + 1 = 1"
+#    combination[-1]         # => "999999999999999999999999999998 + 999999999999999999999999999999 = 1999999999999999999999999999997"
+#    combination[size / 2]   # => "292893218813452475599155637895 + 296085173605458049080913472356 = 588978392418910524680069110251"
 class HugeCombination < HugeCollection
 
-  def initialize(enumerable, length, max_array_size = nil, rng = nil)
-    raise NotImplementedError, "Not yet implemented for any length != 2" if length != 2 # TODO: Extend this class to handle length N
-    @length = length
+  # Create a new HugeCombination
+  #
+  # ==== Attributes
+  #
+  # * +enumerable+ - Any enumerable that responds to []
+  # * +size+ - The number of elements per combination to use from enumerable. (Currently only size 2 is supported)
+  #
+  # ==== Options
+  #
+  # * +:max_array_size+ - The default size of arrays when #to_a is called.
+  # * +:rng+ - The random number generator to use.
+  def initialize(enumerable, size, max_array_size = nil, rng = nil)
+    raise NotImplementedError, "Not yet implemented for any size != 2" if size != 2 # TODO: Extend this class to handle length N
+    @combination_size = size
     super(enumerable, max_array_size, rng)
   end
 
-  # Returns the size of the original combination before modification.
-  #
-  # ==== Examples
-  #
-  #    combination = HugeCombination.new(('a'..'z').to_a, 2)
-  #    combination.collection_size # => 325
+  private
+
   def collection_size
     sum(enum_size - 1)
   end
 
-  # Returns the element of the combination at the specified index
-  #
-  # ==== Attributes
-  #
-  # * +index+ - The index of the element
-  #
-  # ==== Examples
-  #
-  #    combination = HugeCombination.new(('a'..'z').to_a, 2)
-  #    combination.fetch[17] # => ["a", "s"]
   def fetch(index)
     cycle = locate_cycle(index)
     first_index = cycle - 1
@@ -91,9 +84,6 @@ class HugeCombination < HugeCollection
     second_index = index - used + cycle
     [enum[first_index], enum[second_index]]
   end
-
-
-  private
 
   def locate_cycle(index, min=0, max=enum_size-1)
     cycle = min + (max - min) / 2
@@ -125,3 +115,4 @@ class HugeCombination < HugeCollection
   end
 
 end
+

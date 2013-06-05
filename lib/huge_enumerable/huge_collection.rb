@@ -19,28 +19,23 @@ require 'huge_enumerable'
 #
 #    class StringNext < HugeCollection
 #
-#      attr_reader :collection_size
-#
 #      def initialize(size)
 #        @collection_size = size
-#        @char = ('a'..'z').to_a
-#        super nil, nil
+#        super ('a'..'z').to_a
 #      end
+#
+#      private
 #
 #      def fetch(index)
 #        result = ""
 #        index += 1
 #        while index > 0
 #          index -= 1
-#          result.prepend char[index % 26]
+#          result.prepend super(index % 26)
 #          index /= 26
 #        end
 #        result
 #      end
-#
-#      private
-#
-#      attr_reader :char
 #
 #    end
 #
@@ -70,36 +65,20 @@ class HugeCollection < HugeEnumerable
     super(max_array_size, rng)
   end
 
-  # Returns the size of the original collection before modification.
-  #
-  # ==== Examples
-  #
-  #    collection = HugeCollection.new(('a'..'z').to_a)
-  #    collection.collection_size # => 26
-  def collection_size
-    enum_size
-  end
-
-  # Returns the element of the collection at the specified index
-  #
-  # ==== Attributes
-  #
-  # * +index+ - The index of the element
-  #
-  # ==== Examples
-  #
-  #    collection = HugeCollection.new(('a'..'z').to_a)
-  #    collection.fetch[17] # => "r"
-  def fetch(index)
-    enum[index]
-  end
-
   private
 
   attr_accessor :enum
 
+  def collection_size
+    @collection_size ||= enum_size
+  end
+
   def enum_size
     @enum_size ||= enum.size
+  end
+
+  def fetch(index)
+    enum[index]
   end
 
 end

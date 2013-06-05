@@ -5,6 +5,8 @@ describe HugeCombination do
   let(:enumerable) { ('a'..'z').to_a }
 
   subject(:combination) do
+    HugeCombination.send(:public, :collection_size)
+    HugeCombination.send(:public, :fetch)
     HugeCombination.new(enumerable, 2)
   end
 

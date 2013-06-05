@@ -5,6 +5,8 @@ describe HugeCollection do
   let(:enumerable) { ('a'..'z').to_a }
 
   subject(:collection) do
+    HugeCollection.send(:public, :collection_size)
+    HugeCollection.send(:public, :fetch)
     HugeCollection.new(enumerable)
   end
 
