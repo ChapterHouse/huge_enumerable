@@ -2,6 +2,9 @@ require "huge_enumerable/version"
 
 require 'backports' if RUBY_VERSION < '1.9'
 require 'prime'
+require 'prime_miller_rabin'
+
+Prime::MillerRabin.speed_intercept
 
 class HugeEnumerable
 
@@ -139,12 +142,20 @@ class HugeEnumerable
     raise NotImplementedError, "not implemented for #{self.class.name}"
   end
 
+  def miller_rabin
+    @miller_rabin ||= Prime::MillerRabin.new
+  end
+
   def next_prime(x)
     if x < 2
       2
+    elsif x < 3
+      3
+    elsif x < 5
+      5
     else
-      x = x + (x.even? ? 1 : 2)
-      x += 2 until x.prime?
+      x += (x.even? ? 1 : (x % 10 == 3 ? 4 : 2 ))
+      x += (x % 10 == 3 ? 4 : 2 ) until Prime.prime?(x, miller_rabin)
       x
     end
   end
