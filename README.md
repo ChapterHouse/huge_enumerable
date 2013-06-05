@@ -18,7 +18,7 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+See HugeCollection, HugeCombination, HugePermutation, and HugeProduct for was of utilizing HugeEnumerable.
 
 ## Contributing
 
