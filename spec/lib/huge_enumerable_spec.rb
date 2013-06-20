@@ -7,8 +7,8 @@ describe HugeEnumerable do
   subject(:enumerable) do
     klass = Class.new(HugeEnumerable)
     enum_collection = collection.sort
-    klass.define_method(:collection_size) { enum_collection.size }
-    klass.define_method(:fetch) { |x| enum_collection[x] }
+    klass.send(:define_method, :collection_size) { enum_collection.size }
+    klass.send(:define_method, :fetch) { |x| enum_collection[x] }
     klass.send(:public, :next_prime)
     klass.send(:public, :_fetch)
     klass.send(:public, :element_or_array)
