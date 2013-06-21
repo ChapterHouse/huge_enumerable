@@ -46,7 +46,7 @@ require 'huge_enumerable'
 #    collection[googol / 2] # => "dlijhfafxmqxnusmhfpshmdmopvodxfnkfgivwvnejaapyxmynutdlmjhxxqrykiiuizzhi"
 #    collection.shuffle!
 #    collection[0]          # => "bipzqqzayczkgsmaseflwktpsotzclcjsqlnnjaciaawufpojywxflknuddhqkilhoedacn"
-#    collecyion[-1]         # => "etneuebyurxgrvrfsreesxuvjaiyoqwplofsptacjdbhuhafdiwbwujvniokltgkjbfkiuy"
+#    collection[-1]         # => "etneuebyurxgrvrfsreesxuvjaiyoqwplofsptacjdbhuhafdiwbwujvniokltgkjbfkiuy"
 class HugeCollection < HugeEnumerable
 
   # Create a new HugeCollection
