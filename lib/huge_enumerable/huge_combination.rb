@@ -58,60 +58,58 @@ class HugeCombination < HugeCollection
   # ==== Attributes
   #
   # * +enumerable+ - Any enumerable that responds to []
-  # * +size+ - The number of elements per combination to use from enumerable. (Currently only size 2 is supported)
+  # * +size+ - The number of elements per combination to use from enumerable.
   #
   # ==== Options
   #
   # * +:max_array_size+ - The default size of arrays when #to_a is called.
   # * +:rng+ - The random number generator to use.
   def initialize(enumerable, size, max_array_size = nil, rng = nil)
-    raise NotImplementedError, "Not yet implemented for any size != 2" if size != 2 # TODO: Extend this class to handle length N
     @combination_size = size
     super(enumerable, max_array_size, rng)
   end
 
   private
 
+  attr_reader :combination_size
+
   def collection_size
-    sum(enum_size - 1)
+    @collection_size = size_of_combination(enum_size, combination_size)
   end
 
   def fetch(index)
-    cycle = locate_cycle(index)
-    first_index = cycle - 1
-    max_cycles = enum_size - 1
-    used = (cycle - 1) == 0 ? 0 : sum_from(max_cycles, max_cycles - (cycle - 2))
-    second_index = index - used + cycle
-    [enum[first_index], enum[second_index]]
+    indexes_for(collection_size - index - 1).map { |i| enum[enum_size - i - 1] }
   end
 
-  def locate_cycle(index, min=0, max=enum_size-1)
-    cycle = min + (max - min) / 2
+  def factorial(x)
+    x == 0 ? 1 : (1..x).reduce(:*)
+  end
 
-    check_high = sum_at_cycle(cycle)
-    check_low = sum_at_cycle(cycle - 1)
+  def size_of_combination(n, k)
+    k < 0 || n < k ? 0 : factorial(n)/(factorial(k) * factorial(n - k))
+  end
 
-    if check_high > index && check_low <= index
-      cycle
-    elsif check_low > index
-      locate_cycle(index, min, cycle-1)
-    else
-      locate_cycle(index, cycle+1, max)
+  def indexes_for(p)
+    k = combination_size
+    rc = []
+    while k > 0
+      n, size = next_n_and_size(p, k)
+      p -= size
+      k -= 1
+      rc << n
     end
+    rc
   end
 
-  def sum(x)
-    x * (x + 1) / 2
-  end
-
-  def sum_from(m, n)
-    m, n = [n, m] if m > n
-    (n + 1 - m)*(n + m)/2
-  end
-
-  def sum_at_cycle(c)
-    ec = enum_size * c
-    (-c + 2*ec - c**2)/2
+  def next_n_and_size(p, k)
+    n = k - 1
+    size = size_of_combination(n, k)
+    begin
+      rc = [n, size]
+      n += 1
+      size = size_of_combination(n, k)
+    end while size <= p
+    rc
   end
 
 end
