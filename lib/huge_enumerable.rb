@@ -334,6 +334,11 @@ class HugeEnumerable
     increment == domain_size ? next_prime(increment + 1) : increment
   end
 
+  def factorial(x)
+    x == 0 ? 1 : (1..x).reduce(:*)
+  end
+
+
   def element_or_array(n = nil)
     unless n.nil?
       n = n.to_i

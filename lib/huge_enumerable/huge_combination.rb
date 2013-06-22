@@ -74,15 +74,11 @@ class HugeCombination < HugeCollection
   attr_reader :combination_size
 
   def collection_size
-    @collection_size = size_of_combination(enum_size, combination_size)
+    @collection_size ||= size_of_combination(enum_size, combination_size)
   end
 
   def fetch(index)
     indexes_for(collection_size - index - 1).map { |i| enum[enum_size - i - 1] }
-  end
-
-  def factorial(x)
-    x == 0 ? 1 : (1..x).reduce(:*)
   end
 
   def size_of_combination(n, k)
