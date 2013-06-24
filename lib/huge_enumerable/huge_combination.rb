@@ -85,16 +85,16 @@ class HugeCombination < HugeCollection
     k < 0 || n < k ? 0 : factorial(n)/(factorial(k) * factorial(n - k))
   end
 
-  def indexes_for(p)
+  def indexes_for(position)
     k = combination_size
-    rc = []
+    indexes = []
     while k > 0
-      n, size = next_n_and_size(p, k)
-      p -= size
+      n, size = next_n_and_size(position, k)
+      position -= size
       k -= 1
-      rc << n
+      indexes << n
     end
-    rc
+    indexes
   end
 
   def next_n_and_size(p, k)

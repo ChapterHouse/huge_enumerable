@@ -3,11 +3,12 @@ require 'spec_helper'
 describe HugeCombination do
 
   let(:enumerable) { ('a'..'z').to_a }
+  let(:combination_size) { 3 }
 
   subject(:combination) do
     HugeCombination.send(:public, :collection_size)
     HugeCombination.send(:public, :fetch)
-    HugeCombination.new(enumerable, 3)
+    HugeCombination.new(enumerable, combination_size)
   end
 
   def enum_combo(x)
@@ -18,7 +19,7 @@ describe HugeCombination do
   context "#collection_size" do
 
     it "is equal to array#combination.to_a.size" do
-      combination.collection_size.should eql(enum_combo(3).size)
+      combination.collection_size.should eql(enum_combo(combination_size).size)
     end
 
   end
@@ -28,7 +29,7 @@ describe HugeCombination do
     it "returns values in the same order as array#combination.to_a[]" do
       enum_combo_fetches = []
       combination_fetches = []
-      enum_combo(3).size.times { |i| enum_combo_fetches << enum_combo(3)[i] }
+      enum_combo(combination_size).size.times { |i| enum_combo_fetches << enum_combo(combination_size)[i] }
       combination.collection_size.times { |i| combination_fetches << combination.fetch(i) }
       combination_fetches.should eql(enum_combo_fetches)
     end

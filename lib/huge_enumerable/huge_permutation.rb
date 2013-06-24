@@ -41,27 +41,40 @@ class HugePermutation < HugeCollection
   # ==== Attributes
   #
   # * +enumerable+ - Any enumerable that responds to []
-  # * +size+ - The number of elements per permutation to use from enumerable. (Currently only size 2 is supported)
+  # * +size+ - The number of elements per permutation to use from enumerable.
   #
   # ==== Options
   #
   # * +:max_array_size+ - The default size of arrays when #to_a is called.
   # * +:rng+ - The random number generator to use.
-  def initialize(enumerable, length, max_array_size = nil, rng = nil)
-    raise NotImplementedError, "Not yet implemented for any length != 2" if length != 2 # TODO: Extend this class to handle length N
+  def initialize(enumerable, size, max_array_size = nil, rng = nil)
+    @permutation_size = size
     super(enumerable, max_array_size, rng)
   end
 
   private
 
+  attr_accessor :permutation_size
+
   def fetch(x)
-    first_index = x / (enum_size - 1)
-    second_index = ((x % enum_size) + (x / enum_size + 1)) % enum_size
-    [enum[first_index], enum[second_index]]
+    indexes_for(x).map { |i| enum[i] }
   end
 
   def collection_size
-    enum_size * (enum_size - 1)
+    @collection_size ||= factorial(enum_size) / factorial(enum_size - permutation_size)
+  end
+
+  def indexes_for(position)
+    inversions = []
+    (enum_size-permutation_size+1..enum_size).each do |m|
+      inversions.unshift(position % m)
+      position /= m
+    end
+
+    indexes = []
+    positions = (0..enum_size-1).to_a
+    permutation_size.times { |i| indexes << positions.delete_at(inversions[i]) }
+    indexes
   end
 
 end
