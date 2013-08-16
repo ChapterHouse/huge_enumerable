@@ -1,6 +1,10 @@
 require 'huge_enumerable'
-# HugeCombination is a HugeEnumerable style combination. Comparable to Array#combination.
-# This class can be used to generate combinations of large arrays or anything else that responds to [].
+# HugeCombination is a HugeEnumerable style combination. Comparable to
+# Array#combination.
+#
+# This class can be used to generate combinations of large arrays or anything
+# else that responds to [].
+#
 # It is not necessary for the enumerable to be completely mapped into memory.
 # It only has to be able to return the element mapped to the index given to [].
 # ==== Examples

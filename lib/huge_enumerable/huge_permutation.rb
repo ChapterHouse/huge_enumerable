@@ -1,6 +1,10 @@
 require 'huge_enumerable'
-# HugePermutation is a HugeEnumerable style permutation. Comparable to Array#permutation.
-# This class can be used to generate permutations of large arrays or anything else that responds to [].
+# HugePermutation is a HugeEnumerable style permutation. Comparable to
+# Array#permutation.
+#
+# This class can be used to generate permutations of large arrays or anything
+# else that responds to [].
+#
 # It is not necessary for the enumerable to be completely mapped into memory.
 # It only has to be able to return the element mapped to the index given to [].
 # ==== Examples

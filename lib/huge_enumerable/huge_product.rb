@@ -1,8 +1,13 @@
 require 'huge_enumerable'
-# HugePermutation is a HugeEnumerable style product. Comparable to Array#product.
-# This class can be used to generate products of large arrays or anything else that responds to [].
+# HugePermutation is a HugeEnumerable style product. Comparable to
+# Array#product.
+#
+# This class can be used to generate products of large arrays or anything else
+# that responds to [].
+#
 # It is not necessary for the enumerables to be completely mapped into memory.
-# They only have to be able to return the element mapped to the index given to [].
+# They only have to be able to return the element mapped to the index given to
+# [].
 # ==== Examples
 #
 # Using HugeProduct directly:
