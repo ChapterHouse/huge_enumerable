@@ -19,7 +19,7 @@ describe HugePermutation do
   context "#collection_size" do
 
     it "is equal to array#permutation.to_a.size" do
-      permutation.collection_size.should eql(enum_perm(permutation_size).size)
+      expect(permutation.collection_size).to eql(enum_perm(permutation_size).size)
     end
 
   end
@@ -31,7 +31,7 @@ describe HugePermutation do
       permutation_fetches = []
       enum_perm(permutation_size).size.times { |i| enum_perm_fetches << enum_perm(permutation_size)[i] }
       permutation.collection_size.times { |i| permutation_fetches << permutation.fetch(i) }
-      permutation_fetches.should eql(enum_perm_fetches)
+      expect(permutation_fetches).to eql(enum_perm_fetches)
     end
 
   end

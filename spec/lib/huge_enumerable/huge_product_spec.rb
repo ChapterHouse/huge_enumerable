@@ -15,7 +15,7 @@ describe HugeProduct do
   context "#collection_size" do
 
     it "is equal to array#product(other_ary).size" do
-      product.collection_size.should eql(enum_prod.size)
+      expect(product.collection_size).to eql(enum_prod.size)
     end
 
   end
@@ -27,7 +27,7 @@ describe HugeProduct do
       product_fetches = []
       enum_prod.size.times { |i| enum_prod_fetches << enum_prod[i] }
       product.collection_size.times { |i| product_fetches << product.fetch(i) }
-      product_fetches.should eql(enum_prod_fetches)
+      expect(product_fetches).to eql(enum_prod_fetches)
     end
 
   end

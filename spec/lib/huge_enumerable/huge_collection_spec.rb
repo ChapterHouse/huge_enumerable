@@ -13,7 +13,7 @@ describe HugeCollection do
   context "#collection_size" do
 
     it "is equal to the original enumerable size" do
-      collection.collection_size.should eql(enumerable.size)
+      expect(collection.collection_size).to eql(enumerable.size)
     end
 
   end
@@ -25,7 +25,7 @@ describe HugeCollection do
       collection_fetches = []
       enumerable.size.times { |i| enumerable_fetches << enumerable[i] }
       collection.collection_size.times { |i| collection_fetches << collection.fetch(i) }
-      collection_fetches.should eql(enumerable_fetches)
+      expect(collection_fetches).to eql(enumerable_fetches)
     end
 
   end

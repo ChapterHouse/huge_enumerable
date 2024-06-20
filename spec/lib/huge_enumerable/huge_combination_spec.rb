@@ -19,7 +19,7 @@ describe HugeCombination do
   context "#collection_size" do
 
     it "is equal to array#combination.to_a.size" do
-      combination.collection_size.should eql(enum_combo(combination_size).size)
+      expect(combination.collection_size).to eql(enum_combo(combination_size).size)
     end
 
   end
@@ -31,7 +31,7 @@ describe HugeCombination do
       combination_fetches = []
       enum_combo(combination_size).size.times { |i| enum_combo_fetches << enum_combo(combination_size)[i] }
       combination.collection_size.times { |i| combination_fetches << combination.fetch(i) }
-      combination_fetches.should eql(enum_combo_fetches)
+      expect(combination_fetches).to eql(enum_combo_fetches)
     end
 
   end

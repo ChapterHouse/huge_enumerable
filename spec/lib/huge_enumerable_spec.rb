@@ -595,7 +595,7 @@ describe HugeEnumerable do
       it "should map the relative index to an absolute index before calling fetch" do
         enumerable.shift(3)
         expect(enumerable).to receive(:shuffle_index) { |index| index + 2 }
-        enumerable.should_receive(:fetch).with(5)
+        expect(enumerable).to receive(:fetch).with(5)
         enumerable._fetch(0)
       end
 
