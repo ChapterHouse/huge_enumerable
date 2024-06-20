@@ -106,11 +106,13 @@ class HugeEnumerable
   # If no block is given, an HugeCombination is returned instead.
   # === Caveat
   # max_array_size is currently inherited by the generated HugeCombination. This may change in the future.
-  def combination(n) # :yields: element
-    random_number_generator = rng != self.method(:rand) ? rng : nil
-    combo = HugeCombination.new(self.dup.reset!, n, max_array_size, random_number_generator)
-    if block_given?
-      combo.each { |x| yield x }
+  def combination(n, &block) # :yields: element
+    # Check to see if we have a specific random number generator to use.
+    # Using hash comparison as dups, clones, and other actions can make == and eql? return false when it is actually the same method
+    random_number_generator = rng.hash != method(:rand).hash ? rng : nil
+    combo = HugeCombination.new(self.clone.reset!, n, max_array_size, random_number_generator)
+    if block
+      combo.each(&block)
       self
     else
       combo
@@ -118,9 +120,15 @@ class HugeEnumerable
   end
 
   # Calls the given block once for each element in the next array of the collection, passing that element as a parameter.
-  def each # :yields: element
+  def each(&block) # :yields: element
     # TODO: Return an Enumerator if no block is given
-    remaining_or(max_array_size).times { |i| yield _fetch(i) }
+    remaining_or(max_array_size).times(&(block << method(:_fetch)))
+    # remaining_or(max_array_size).times { |i| yield _fetch(i) }
+  end
+
+  def initialize_copy(orig)
+    super
+    @rng = @rng.unbind.bind(self) if @rng.respond_to?(:unbind) # Make sure this is bound to self if it is a method
   end
 
   def max_array_size #:nodoc:
@@ -142,11 +150,13 @@ class HugeEnumerable
   # If no block is given, a HugePermutation is returned instead.
   # === Caveat
   # max_array_size is currently inherited by the generated HugePermutation. This may change in the future.
-  def permutation(n) # :yields: element
-    random_number_generator = rng != self.method(:rand) ? rng : nil
-    perm = HugePermutation.new(self.dup.reset!, n, max_array_size, random_number_generator)
-    if block_given?
-      perm.each { |x| yield x }
+  def permutation(n, &block) # :yields: element
+    # Check to see if we have a specific random number generator to use.
+    # Using hash comparison as dups, clones, and other actions can make == and eql? return false when it is actually the same method
+    random_number_generator = rng.hash != method(:rand).hash ? rng : nil
+    perm = HugePermutation.new(self.clone.reset!, n, max_array_size, random_number_generator)
+    if block
+      perm.each(&block)
       self
     else
       perm
@@ -165,12 +175,14 @@ class HugeEnumerable
   # === Caveat
   # max_array_size is currently inherited by the generated HugeProduct. This may change in the future.
   # other_enumerable is duped and reset if it is a HugeEnumerable. This may change in the future.
-  def product(other_enumerable) # :yields: element
-    other_enumerable = other_enumerable.dup.reset! if other_enumerable.is_a?(HugeEnumerable)
-    random_number_generator = rng != self.method(:rand) ? rng : nil
-    prod = HugeProduct.new(self.dup.reset!, other_enumerable, max_array_size, random_number_generator)
-    if block_given?
-      prod.each { |x| yield x }
+  def product(other_enumerable, &block) # :yields: element
+    other_enumerable = other_enumerable.clone.reset! if other_enumerable.is_a?(HugeEnumerable)
+    # Check to see if we have a specific random number generator to use.
+    # Using hash comparison as dups, clones, and other actions can make == and eql? return false when it is actually the same method
+    random_number_generator = rng.hash != method(:rand).hash ? rng : nil
+    prod = HugeProduct.new(self.clone.reset!, other_enumerable, max_array_size, random_number_generator)
+    if block
+      prod.each(&block)
       self
     else
       prod
@@ -221,7 +233,7 @@ class HugeEnumerable
   # ==== Side Effects
   # The new collection is reset to the current collection's original size and elements before shuffling.
   def shuffle(rng=nil)
-    self.dup.shuffle!(rng)
+    self.clone.shuffle!(rng)
   end
 
   # Randomly reorders the elements of the collection.
