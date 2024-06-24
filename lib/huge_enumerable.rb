@@ -1,7 +1,5 @@
 require "huge_enumerable/version"
 
-require 'backports' if RUBY_VERSION < '1.9'
-require 'prime'
 require 'prime_miller_rabin'
 
 Prime::MillerRabin.speed_intercept
